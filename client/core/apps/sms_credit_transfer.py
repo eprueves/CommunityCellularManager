@@ -2,9 +2,9 @@
 
 Copyright (c) 2016-present, Facebook, Inc.
 All rights reserved.
- 
+
 This source code is licensed under the BSD-style license found in the
-LICENSE file in the root directory of this source tree. An additional grant 
+LICENSE file in the root directory of this source tree. An additional grant
 of patent rights can be found in the PATENTS file in the same directory.
 """
 
@@ -26,7 +26,7 @@ from core.exceptions import SubscriberNotFound
 
 config_db = config_database.ConfigDB()
 gt = gettext.translation("endaga", config_db['localedir'],
-                         [config_db['locale'], "en_US"]).ugettext
+                         [config_db['locale'], "en_US"]).gettext
 
 
 def _init_pending_transfer_db():
@@ -35,7 +35,7 @@ def _init_pending_transfer_db():
         "CREATE TABLE pending_transfers (code VARCHAR(5) PRIMARY KEY,"
         " time FLOAT, from_acct INTEGER, to_acct INTEGER, amount INTEGER);")
     try:
-        with open(config_db['pending_transfer_db_path']) as _:
+        with open(config_db['pending_transfer_db_path']):
             pass
     except IOError:
         db = sqlite3.connect(config_db['pending_transfer_db_path'])
@@ -43,7 +43,7 @@ def _init_pending_transfer_db():
         db.commit()
         db.close()
         # Make the DB world-writable.
-        os.chmod(config_db['pending_transfer_db_path'], 0777)
+        os.chmod(config_db['pending_transfer_db_path'], 0o777)
 
 
 def process_transfer(from_imsi, to_imsi, amount):
@@ -57,6 +57,10 @@ def process_transfer(from_imsi, to_imsi, amount):
     Returns:
       boolean indicating success
     """
+    # Error when user tries to transfer to his own account
+    if from_imsi == to_imsi:
+        return False, gt("Transaction Failed. Sharing load to " 
+                         "your own account is not allowed.")
     from_balance = int(subscriber.get_account_balance(from_imsi))
     # Error when user tries to transfer more credit than they have.
     if not from_balance or from_balance < amount:
@@ -184,7 +188,7 @@ def handle_incoming(from_imsi, request):
     else:
         # NOTE: Sent when the user tries to transfer credit with the wrong
         #       format message.
-        _, resp = False, gt("To transfer credit, reply with a message in the"
+        resp = gt("To transfer credit, reply with a message in the"
                             " format 'NUMBER*AMOUNT'.")
     from_number = subscriber.get_numbers_from_imsi(from_imsi)[0]
     sms.send(str(from_number), str(config_db['app_number']), str(resp))

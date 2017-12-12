@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""
+Copyright (c) 2016-present, Facebook, Inc.
+All rights reserved.
+
+This source code is licensed under the BSD-style license found in the
+LICENSE file in the root directory of this source tree. An additional grant
+of patent rights can be found in the PATENTS file in the same directory.
+"""
+
+import asyncio
+import functools
+import logging
+from osmocom.gsup.processor import Processor
+from osmocom.gsup.protocols.ipa import OsmoIPAServer
+from osmocom.gsup.store.sqlite import SqliteStore
+
+
+def main():
+    """ main() for subscriberdb """
+
+    logging.basicConfig(level=logging.INFO)
+
+    # Initialize a store to keep all subscriber data.
+    store = SqliteStore('file::memory:?cache=shared')
+
+    # Initialize the processor
+    processor = Processor(store)
+    loop = asyncio.get_event_loop()
+
+    # Setup the listening interfaces and protocols for subscriberdb.
+    ipa_server = functools.partial(OsmoIPAServer, processor)
+    server_coro = loop.create_server(ipa_server, '0.0.0.0', 2222)
+    server = loop.run_until_complete(server_coro)
+
+    # Run the service loop
+    logging.info("Starting server.")
+    try:
+        loop.run_forever()
+    except KeyboardInterrupt:
+        pass
+
+
+    # Cleanup the service
+    server.close()
+    loop.run_until_complete(server.wait_closed())
+    loop.close()
+
+
+if __name__ == "__main__":
+    main()

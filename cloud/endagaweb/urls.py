@@ -10,7 +10,7 @@ of patent rights can be found in the PATENTS file in the same directory.
 
 from django.conf import settings
 from django.conf.urls import include, url
-from django.contrib import admin, auth
+from django.contrib import admin
 import django.contrib.auth.views
 
 import endagaweb.views
@@ -69,12 +69,15 @@ urlpatterns = [
     # Our homepage.
     url(r'^$', endagaweb.views.static.LandingIndexView.as_view()),
 
+    # ELB testing endpoint
+    url(r'^django-status', endagaweb.views.static.TestView.as_view()),
+
     # Notification emails and phone nnumbers
     url(r'^account/notify_emails/update', endagaweb.views.user.update_notify_emails),
     url(r'^account/notify_numbers/update', endagaweb.views.user.update_notify_numbers),
 
     # Auth.
-    url(r'^login/$', endagaweb.views.user.loginview),
+    url(r'^login/$', endagaweb.views.user.loginview, name='endagaweb-login'),
     url(r'^auth/', endagaweb.views.user.auth_and_login),
     url(r'^account/password/change', endagaweb.views.user.change_password),
     url(r'^account/update', endagaweb.views.user.update_contact),
@@ -139,6 +142,9 @@ urlpatterns = [
     url(r'^dashboard/network/prices$',
         endagaweb.views.network.NetworkPrices.as_view(),
         name='network-prices'),
+    url(r'^dashboard/network/denominations$',
+        endagaweb.views.network.NetworkDenomination.as_view(),
+        name='network-denominations'),
     url(r'^dashboard/network/inactive-subscribers$',
         endagaweb.views.network.NetworkInactiveSubscribers.as_view(),
         name='network-inactive-subscribers'),

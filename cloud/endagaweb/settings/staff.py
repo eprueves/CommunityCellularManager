@@ -1,5 +1,9 @@
 """Django staff site settings.
 
+Staff site extends production site functionality with admin capabilities.
+Keeping the two separate allows for operational changes to be applied to
+them separately.
+
 Copyright (c) 2016-present, Facebook, Inc.
 All rights reserved.
 
@@ -8,11 +12,23 @@ LICENSE file in the root directory of this source tree. An additional grant
 of patent rights can be found in the PATENTS file in the same directory.
 """
 
+# Flake8 doesn't handle star imports very well, so disable linting
+# flake8: noqa
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from .base import *
+
+from .prod import *
+
+# Add applications required for admin functionality
+INSTALLED_APPS += [
+    'django.contrib.admin',
+    'django.contrib.admindocs',
+    'logentry_admin',
+    'loginas'
+]
 
 # Set django-allauth oauth token scope to get email addresses and set the
 # post-login redirect to /dashboard.  We create a whitelist and only allow
@@ -23,17 +39,3 @@ LOGIN_REDIRECT_URL = '/dashboard'
 STAFF_EMAIL_DOMAIN_WHITELIST = ['fb.com']
 SOCIALACCOUNT_ADAPTER = 'endagaweb.views.user.WhitelistedSocialAccountAdapter'
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
-
-# On the staff box, add django admin, and allauth.
-INSTALLED_APPS += [
-    'django.contrib.admin',
-    'django.contrib.admindocs',
-    'loginas'
-]
-
-# Ensure we're using secure cookie
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
-
-# Security middleware settings
-SECURE_CONTENT_TYPE_NOSNIFF = True

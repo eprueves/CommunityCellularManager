@@ -29,18 +29,23 @@ dependencies set up to build Freeswitch and OpenBTS if necessary.
 
 Setup
 ========
-- Check out all our repos and put them alongside each other
+After having checked out the Community Cellular Manager (CCM) repo:
 - `cd` into the `client` repo
-- `vagrant up` to launch the dev VM. This will set up all your build deps.
+- `vagrant up osmocom` to launch the Osmocom dev VM. This will set up
+all your build deps. Osmocom is suitable for most testing purposes, even
+if Osmocom-compatible hardware is not available.
+
+It is STRONGLY RECOMMENDED that the initial installation of client
+software within the VM is accomplished using `apt-get` to download the
+appropriate top-level package, to ensure that all dependencies are
+automatically satisfied. Install `endaga-osmocom` as follows: `apt-get
+install endaga-osmocom`.
 
 To build everything from source (i.e., what you have checked out on
 your box) do the following: On your box, you run `fab dev package` to
-create all the dpkg's, then ssh into the VM ('vagrant ssh
-[osmocom|openbts]'), then go to the endaga_packages folder and install
-all of the packages. Note that these packages have dependencies that
-will be pulled from production repos, so make sure to install them in
-order (endaga-core before the endaga metapackage is the only one that
-seems to matter).
+create all the `.deb` packages, then ssh into the VM (`vagrant ssh
+[osmocom|openbts]`), then go to the `endaga_packages` folder and install
+all of the packages (e.g., using `dpkg` or `gdebi`).
 
 You can also call `fab dev package:package_requirements=no` to not
 package up install requirements for python packages. This is useful
@@ -50,12 +55,30 @@ the `localdev` repository from being rebuilt. This is also useful in
 development workflows where just want to install a `.deb` and not
 resolve dependencies.
 
-Alternatively, run 'sudo apt-get install endaga' from inside the VM to
-install the packaged version of our stack. This is not guaranteed to
-be compatible with the endaga cloud release, however.
 
+Client Certificates
+-------------------
 
+A key component in the CCM security architecture is the VPN that
+connects each client to the cloud environment. It is **ESSENTIAL**
+that the client is using the same CA bundle as the certifier and VPN
+servers that run in the cloud; the client registration process uses
+OpenSSL to verify this and registration will fail if not. This file is
+called `etage-bundle.crt`: on the client and VPN it is placed in the
+`/etc/openvpn` directory, in the certifier it gets created in the
+`pki` subdirectory (as `ca.crt`) and copied to the top-level
+`certifier` directory (as `etage-bundle.crt`).
 
+When installing packages from the CCM package repository the standard
+'Etagecom' CA bundle will be included, and hence the installation of
+that package will overwrite `/etc/openvpn/etage-bundle.crt`. In order
+to support use of a local CA file, within the constraints of the
+current packaging scheme, the client also checks
+`etage-bundle.local.crt` when attempting to verify the client
+certificate. Hence, if copying a locally generated CA bundle into the
+client VM it is strongly recommended that it be copied to
+`/etc/openvpn/etage-bundle.local.crt` in order to avoid subsequent
+replacement by the standard packages.
 
 Testing
 -------
